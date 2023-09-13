@@ -8,9 +8,11 @@ const loseImg = new Image();
 winImg.src = './assets/win.png';
 loseImg.src = './assets/lose.png';
 
-
 ctx.font = "50px Arial";
 ctx.fillStyle = "black";
+
+let startTime = null;
+let secondsElapsed = 0;
 
 function updateHUD() {
     crosshair.src = './assets/crosshair.png';
@@ -36,11 +38,28 @@ function updateHUD() {
 }
 
 
-function run() {
+function run(time) {
+
+    if(!startTime) {
+        startTime = time;
+    }
+
+    // console.log(time)
+    
+    if (totalPoints >= 5 && shots == 0) {
+        secondsElapsed += 0
+        // console.log(`It took ${secondsElapsed} seconds to get 5 points.`);
+        ctx.fillText(`${secondsElapsed} seconds!`, 630, 550);
+    } else {
+        const elapsedTime = (time - startTime) *0.001
+        secondsElapsed = Math.floor(elapsedTime)
+    }
+
     if (shots >= 0) {
         updateHUD();
         requestAnimationFrame(run);
     }
+
 }
 
 run(); // Start the animation loop

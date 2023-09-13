@@ -48,88 +48,71 @@
                 gl_FragColor = textureCube(u_skybox, normalize(t.xyz / t.w));
             }
         </script>
-        <script id="cube_vs" type="x-shader/x-fragment">
+        <script  id="cube_vs" type="x-shader/x-vertex">
             attribute vec4 a_position;
-            attribute vec4 a_color;
             attribute vec3 a_normal;
-
+            
             uniform mat4 u_matrix;
-            uniform vec3 u_LightPosition;
-
-            varying vec4 v_color;
-
+            uniform vec3 u_lightPosition;
+            
+            varying vec3 v_normal;
+            
             void main() {
-                gl_Position = u_matrix * a_position;
-
-                // Lighting calculations
-                vec3 normal = normalize(mat3(u_matrix) * a_normal);
-                vec3 lightDirection = normalize(u_LightPosition - a_position.xyz);
-                float lightIntensity = max(dot(normal, lightDirection), 0.0);
-
-                v_color = vec4(0.5, 0.5, 1.0, 0.0) * lightIntensity;
+              // Multiply the position by the matrix.
+              gl_Position = u_matrix * a_position;
+            
+              v_normal = normalize(a_position.xyz);
             }
         </script>
         <script id="cube_fs" type="x-shader/x-fragment">
             precision mediump float;
-
-            varying vec4 v_color;
-
+            
+            // Passed in from the vertex shader.
+            varying vec3 v_normal;
+            
+            uniform samplerCube u_texture;
+            uniform vec3 u_LightPosition;
+            uniform vec3 u_CameraPosition;
+            
             void main() {
-                gl_FragColor = vec4(v_color);
+                vec3 cubeToBallDir = normalize(u_LightPosition - gl_FragCoord.xyz);
+                
+                vec3 cubeToCameraDir = normalize(v_normal * 2.0 + gl_FragCoord.xyz);
+                
+                vec3 lightDir = normalize(cubeToBallDir + cubeToCameraDir);
+                float lightFactor = max(dot(v_normal, lightDir), 0.1);
+            
+                vec3 cubeColor = textureCube(u_texture, normalize(v_normal)).xyz;
+                vec3 finalColor = cubeColor * lightFactor;
+            
+                gl_FragColor = vec4(finalColor, 1.0);
             }
-        </script>
+            </script>
         <script id="ball_vs" type="x-shader/x-fragment">
             attribute vec4 a_position;
             attribute vec4 a_color;
-            attribute vec2 a_texcoord; // Add a new attribute for texture coordinates
 
             uniform mat4 u_matrix;
-            
+
             varying vec4 v_color;
-            varying vec2 v_texcoord; // Add a varying variable for texture coordinates
 
             void main() {
-                // Multiply the position by the matrix.
                 gl_Position = u_matrix * a_position;
-
-                // Pass the color to the fragment shader.
                 v_color = a_color;
-
-                // Pass the texture coordinates to the fragment shader.
-                v_texcoord = a_texcoord;
             }
         </script>
         <script id="ball_fs" type="x-shader/x-fragment">
             precision mediump float;
-        
-            // Passed in from the vertex shader.
+
             varying vec4 v_color;
-            varying vec2 v_texcoord; // Varying variable for texture coordinates
-        
+
             uniform vec4 u_colorMult;
-            uniform sampler2D u_texture; // Add a uniform for the texture
-        
-            // Define the light position as a uniform
-            uniform vec3 u_lightPosition;
-        
+
             void main() {
-                // Sample the texture using the texture coordinates.
-                vec4 textureColor = texture2D(u_texture, v_texcoord);
-        
-                // Calculate the vector from the fragment to the light position
-                vec3 lightVector = normalize(u_lightPosition - gl_FragCoord.xyz);
-        
-                // Calculate the diffuse lighting using the dot product of the light vector and the surface normal
-                float diffuse = max(dot(lightVector, normalize(vec3(0.0, 0.0, 1.0))), 5.0);
-        
-                // Set the base color
+                
                 vec3 baseColor = vec3(1, 1, 1);
-        
-                // Apply the lighting to the fragment color
-                vec3 finalColor = baseColor * diffuse * v_color.rgb + 1.0;
-        
-                // Apply the texture color to the fragment color
-                gl_FragColor = vec4(finalColor, textureColor.a);
+                vec3 finalColor = baseColor * v_color.rgb + 1.0;
+                gl_FragColor = vec4(finalColor, v_color.a);
             }
         </script>
         <script id="envmap-vertex-shader" type="x-shader/x-fragment">

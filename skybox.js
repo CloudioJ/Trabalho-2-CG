@@ -8,8 +8,6 @@ function main() {
   if (!gl) {
     return;
   }
-  
-  let chance = Math.floor(Math.random() * 10) + 1;
 
   const waves = new Audio('./sounds/sandy-beach-calm-waves-water-nature-sounds-8052.mp3');
   waves.volume = 0.1;
@@ -31,29 +29,29 @@ function main() {
   const quadBufferInfo = primitives.createXYQuadBufferInfo(gl);
 
   // Create a texture.
-  const texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+  
+  const eggTexture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_CUBE_MAP, eggTexture);
 
-  if (chance === 7){
-  const easter = [
-    {
-      target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
-      url: './assets/Mestre.jpg',
-    },
-    {
-      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
-      url: './assets/Mestre.jpg',
-    },
-    {
-      target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
-      url: './assets/Mestre.jpg',
-    },
-    {
-      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
-      url: './assets/Mestre.jpg',
-    },
-    {
-      target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+    const easter = [
+      {
+        target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+        url: './assets/Mestre.jpg',
+      },
+      {
+        target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+        url: './assets/Mestre.jpg',
+      },
+      {
+        target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+        url: './assets/Mestre.jpg',
+      },
+      {
+        target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+        url: './assets/Mestre.jpg',
+      },
+      {
+        target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
       url: './assets/Mestre.jpg',
     },
     {
@@ -61,10 +59,10 @@ function main() {
       url: './assets/Mestre.jpg',
     },
   ]
-
+  
   easter.forEach((egg) => {
     const {target, url} = egg;
-
+    
     // Upload the canvas to the cubemap face.
     const level = 0;
     const internalFormat = gl.RGBA;
@@ -72,21 +70,26 @@ function main() {
     const height = 512;
     const format = gl.RGBA;
     const type = gl.UNSIGNED_BYTE;
-
+    
     // setup each face so it's immediately renderable
     gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null);
-
+    
     // Asynchronously load an image
     const image = new Image();
     image.src = url;
     image.addEventListener('load', function() {
       // Now that the image has loaded make copy it to the texture.
-      gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+      gl.bindTexture(gl.TEXTURE_CUBE_MAP, eggTexture);
       gl.texImage2D(target, level, internalFormat, format, type, image);
       gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
     });
   });
-  } else {
+
+  gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+  gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
   const faceInfos = [
     {
       target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
@@ -138,7 +141,7 @@ function main() {
       gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
     });
   });
-}
+
   gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
   gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
 
@@ -150,9 +153,10 @@ function main() {
 
   // Get the starting time.
   var then = 0;
-
+  var cubeTexture = texture;
+  
   requestAnimationFrame(drawScene);
-
+  
   // Draw the scene.
   function drawScene(time) {
     // convert to seconds
@@ -184,7 +188,6 @@ function main() {
     // Rotate the cube around the x axis
     var worldMatrix = m4.xRotation(time * 0.11);
     worldMatrix = m4.scale(worldMatrix, 50, 50, 50);
-    const translatedWorldMatrix = m4.scale(worldMatrix, 0, 0, 0);
 
     // We only care about direciton so remove the translation
     var viewDirectionMatrix = m4.copy(view);
@@ -197,10 +200,8 @@ function main() {
     var viewDirectionProjectionInverseMatrix =
         m4.inverse(viewDirectionProjectionMatrix);
 
-    if(totalPoints == 5){
-      gl.clearColor(0.0, 0.0, 0.0, 1.0);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      gl.useProgram(envmapProgramInfo.program);
+    if (totalPoints == 5 && time < 5.5) {
+      cubeTexture = eggTexture;
     }
 
     // draw the cube
@@ -211,7 +212,7 @@ function main() {
       u_world: worldMatrix,
       u_view: view,
       u_projection: projectionMatrix,
-      u_texture: texture,
+      u_texture: cubeTexture,
       u_worldCameraPosition: cameraPosition,
     });
     webglUtils.drawBufferInfo(gl, cubeBufferInfo);

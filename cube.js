@@ -26,7 +26,63 @@ async function main() {
     return d * Math.PI / 180;
   }
 
-  const cubeTex = await loadTexture(gl, './green_ground_texture.jpg');
+  const cubeTex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeTex);
+
+  const faceInfos = [
+    {
+      target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+      url: './assets/rubikscube.jpg',
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+      url: './assets/rubikscube.jpg',
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+      url: './assets/rubikscube.jpg',
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+      url: './assets/rubikscube.jpg',
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+      url: './assets/rubikscube.jpg',
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+      url: './assets/rubikscube.jpg',
+    },
+  ];
+
+  faceInfos.forEach((faceInfo) => {
+    const {target, url} = faceInfo;
+
+    // Upload the canvas to the cubemap face.
+    const level = 0;
+    const internalFormat = gl.RGBA;
+    const width = 512;
+    const height = 512;
+    const format = gl.RGBA;
+    const type = gl.UNSIGNED_BYTE;
+
+    // setup each face so it's immediately renderable
+    gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null);
+
+    // Asynchronously load an image
+    const image = new Image();
+    image.src = url;
+    image.addEventListener('load', function() {
+      // Now that the image has loaded make copy it to the texture.
+      gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeTex);
+      gl.texImage2D(target, level, internalFormat, format, type, image);
+      gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+    });
+  });
+  
+  gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+  gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
   // Uniforms for each object.
   
   var cubePositions = [
@@ -37,8 +93,13 @@ async function main() {
     [200, -20, -140],
     [-80, -50, -400],
   ]
-
   
+  var cubeUniforms = {
+    u_matrix: m4.identity(),
+    u_texture: cubeTex,
+    u_LightPosition: ballPosition,
+    u_CameraPosition: cameraPosition,
+  };
   var cubes = cubePositions.map((position) => ({
     position,
     visible: true,
@@ -46,7 +107,7 @@ async function main() {
 
   function computeMatrix(viewProjectionMatrix, translation, xRotation, yRotation, scale) {
     var matrix = m4.identity();
-      matrix = m4.translate(matrix, translation[0], translation[1], translation[2]);
+    matrix = m4.translate(matrix, translation[0], translation[1], translation[2]);
       matrix = m4.xRotate(matrix, xRotation);
       matrix = m4.yRotate(matrix, yRotation);
       matrix = m4.scale(matrix, scale[0], scale[1], scale[2]);
@@ -148,12 +209,6 @@ async function main() {
     };
 
     
-    var cubeUniforms = {
-      u_colorMult: [1, 0.5, 0.5, 1],
-      u_matrix: m4.identity(),
-      u_texture: cubeTex,
-      u_LightPosition: ballPosition,
-    };
     // console.log(ballPosition)
     
     sphereUniforms.u_matrix = computeMatrix(
@@ -173,6 +228,7 @@ async function main() {
 
     // Setup all the needed attributes.
     gl.useProgram(programInfo.program);
+
     webglUtils.setBuffersAndAttributes(gl, programInfo, cubeBufferInfo);
 
     for (const cube of cubes) {
@@ -185,6 +241,8 @@ async function main() {
               cubeScale
           );
 
+          cubeUniforms.u_CameraPosition = cameraPosition;
+          cubeUniforms.u_LightPosition = ballPosition;
           // Set the uniforms we just computed
           webglUtils.setUniforms(programInfo, cubeUniforms);
 
@@ -193,32 +251,6 @@ async function main() {
   }
     requestAnimationFrame(drawScene);
   }
-}
-
-async function loadTexture(gl, url) {
-  const texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-
-  // Fill the texture with a 1x1 pixel blue color while waiting for the image to load
-  const level = 0;
-  const internalFormat = gl.RGBA;
-  const width = 1;
-  const height = 1;
-  const border = 0;
-  const srcFormat = gl.RGBA;
-  const srcType = gl.UNSIGNED_BYTE;
-  const pixel = new Uint8Array([0, 0, 255, 255]); // blue color
-  gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border, srcFormat, srcType, pixel);
-
-  const image = new Image();
-  image.onload = function () {
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
-    gl.generateMipmap(gl.TEXTURE_2D);
-  };
-  image.src = url;
-
-  return texture;
 }
 
 main();
