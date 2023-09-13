@@ -1,4 +1,4 @@
-# Projeto de Displacement/Height Map com Movimento de Câmera e Disparo de Bolas de Luz
+# Trabalho 2: Displacement/Height Map com Movimento de Câmera e Disparo de Bolas de Luz
 
 Este é um projeto que visa criar uma aplicação interativa que permite montar um mapa de deslocamento (displacement/height map) e transversá-lo com uma câmera, possibilitando movimento manual com o mouse. Além disso, o projeto permite até 5 disparos de bolas de luz quando o mouse é clicado.
 
