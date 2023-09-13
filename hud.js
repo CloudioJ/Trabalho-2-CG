@@ -35,6 +35,7 @@ function updateHUD() {
     ctx.fillText(points, 210, 53)
 }
 
+
 function run() {
     if (shots >= 0) {
         updateHUD();
