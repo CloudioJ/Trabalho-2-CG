@@ -80,7 +80,7 @@
                 vec3 cubeToCameraDir = normalize(v_normal * 2.0 + gl_FragCoord.xyz);
                 
                 vec3 lightDir = normalize(cubeToBallDir + cubeToCameraDir);
-                float lightFactor = max(dot(v_normal, lightDir), 0.1);
+                float lightFactor = max(dot(v_normal, lightDir), 0.2);
             
                 vec3 cubeColor = textureCube(u_texture, normalize(v_normal)).xyz;
                 vec3 finalColor = cubeColor * lightFactor;

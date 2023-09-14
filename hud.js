@@ -13,6 +13,8 @@ ctx.fillStyle = "black";
 
 let startTime = null;
 let secondsElapsed = 0;
+let showLoseMessage = false;
+let loseTimerStart = null;
 
 function updateHUD() {
     crosshair.src = './assets/crosshair.png';
@@ -28,7 +30,7 @@ function updateHUD() {
             ctx.drawImage(winImg, 600, 200, 300, 300);
             ctx.fillText("You won!", 650, 500);
         }
-        if(shots == 0 && totalPoints < 5){
+        if(showLoseMessage){
             ctx.drawImage(loseImg, 600, 200, 300, 300);
             ctx.fillText("You lost", 660, 500);
         }
@@ -39,20 +41,16 @@ function updateHUD() {
 
 
 function run(time) {
-
-    if(!startTime) {
+    if (!startTime) {
         startTime = time;
     }
 
-    // console.log(time)
-    
     if (totalPoints >= 5 && shots == 0) {
-        secondsElapsed += 0
-        // console.log(`It took ${secondsElapsed} seconds to get 5 points.`);
+        secondsElapsed += 0;
         ctx.fillText(`${secondsElapsed} seconds!`, 630, 550);
     } else {
-        const elapsedTime = (time - startTime) *0.001
-        secondsElapsed = Math.floor(elapsedTime)
+        const elapsedTime = (time - startTime) * 0.001;
+        secondsElapsed = Math.floor(elapsedTime);
     }
 
     if (shots >= 0) {
@@ -60,6 +58,15 @@ function run(time) {
         requestAnimationFrame(run);
     }
 
+    if (shots == 0 && totalPoints < 5 && !showLoseMessage) {
+        if (loseTimerStart === null) {
+            loseTimerStart = time;
+        }
+        const loseElapsedTime = (time - loseTimerStart) * 0.001;
+        if (loseElapsedTime >= 2) {
+            showLoseMessage = true;
+        }
+    }
 }
 
 run(); // Start the animation loop
