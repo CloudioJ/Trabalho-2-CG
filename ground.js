@@ -130,7 +130,7 @@ void main() {
 
   float groundTexture = texture2D(u_heightTexture, v_texcoord).r;
 
-  vec3 color = mix(vec3(1.0, 1.0, 1.0), vec3(1.0, 0.9, 1.0), groundTexture);
+  vec3 color = mix(vec3(0.0, 0.0, 1.0), vec3(1.0, 0.9, 1.0), groundTexture);
 
   vec3 lightDirection = normalize(u_lightPosition - v_fragPos);
   float light = dot(lightDirection, normalize(v_normal)) * 0.5 + 0.5;
@@ -141,12 +141,8 @@ void main() {
 }
 `;
 
-
-  // compile shader, link, look up locations
   const programInfo = twgl.createProgramInfo(gl, [vs, fs]);
 
-  // make some vertex data
-  // calls gl.createBuffer, gl.bindBuffer, gl.bufferData for each array
   const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
 
   function degToRad(d) {
@@ -154,7 +150,7 @@ void main() {
   }
 
   const texture = twgl.createTexture(gl, {
-    src: './assets/mountain-tex.jpg',
+    src: './assets/Heightmap.png',
     crossOrigin: '',
   });
 

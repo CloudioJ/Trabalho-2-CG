@@ -9,13 +9,31 @@ winImg.src = './assets/win.png';
 loseImg.src = './assets/lose.png';
 
 ctx.font = "50px Arial";
-ctx.fillStyle = "black";
+ctx.fillStyle = "white";
 
 let startTime = null;
 let secondsElapsed = 0;
 let showLoseMessage = false;
 let loseTimerStart = null;
+let end = false;
 
+const winSound = new Audio('./sounds/win.wav');
+winSound.volume = 0.5;
+winSound.loop = false;
+
+const loseSound = new Audio('./sounds/lose.wav');
+loseSound.volume = 0.5;
+loseSound.loop = false;
+
+function playSound(){
+    if (end == false && !showLoseMessage){
+        winSound.play();
+        end = true;
+    } else if (end == false && showLoseMessage){
+        loseSound.play();
+        end = true;
+    }
+}
 function updateHUD() {
     crosshair.src = './assets/crosshair.png';
     var shotsCounter = `${shots}`
@@ -29,10 +47,12 @@ function updateHUD() {
         if(shots == 0 && totalPoints == 5){
             ctx.drawImage(winImg, 600, 200, 300, 300);
             ctx.fillText("You won!", 650, 500);
+            playSound();
         }
         if(shots == 0 && showLoseMessage){
             ctx.drawImage(loseImg, 600, 200, 300, 300);
             ctx.fillText("You lost", 660, 500);
+            playSound();
         }
     };
     ctx.fillText(shotsCounter, 1300, 672)
