@@ -84,7 +84,7 @@ async function main() {
   gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
   gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
   // Uniforms for each object.
-  
+
   var cubePositions = [
     [10, -30, 100],
     [-110, 0, -90],
@@ -93,6 +93,11 @@ async function main() {
     [200, -20, -140],
     [-80, -50, -400],
   ]
+
+  var cubes = cubePositions.map((position) => ({
+    position,
+    visible: true,
+  }));
   
   var cubeUniforms = {
     u_matrix: m4.identity(),
@@ -100,10 +105,7 @@ async function main() {
     u_LightPosition: ballPosition,
     u_CameraPosition: cameraPosition,
   };
-  var cubes = cubePositions.map((position) => ({
-    position,
-    visible: true,
-  }));
+  
 
   function computeMatrix(viewProjectionMatrix, translation, xRotation, yRotation, scale) {
     var matrix = m4.identity();
@@ -124,40 +126,56 @@ async function main() {
   
   canvas.addEventListener("click", shootBall);
 
-    function shootBall(event) {
-        // Calculate the direction from the camera to the target
-        if (shots > 0) {
-          airAudio.play();
-          var rayDirection = m4.normalize(m4.subtractVectors(target, cameraPosition));
-          
-          // Set the initial position and velocity of the ball
-          ballPosition = cameraPosition.slice(); // Copy camera position
-          ballVelocity = [rayDirection[0] * 2, rayDirection[1] * 2, rayDirection[2] * 2]; // Adjust velocity as needed
-          shots -= 1;
-        }
-    }
-
-    // Function to check if the ball hits an object
-    function checkCollision(position) {
-      for (const cube of cubes) {
-          if (cube.visible) {
-              const distance = m4.distance(position, cube.position);
-              if (distance < 20) { // Adjust this threshold as needed
-                  cube.visible = false; // Cube disappears on collision
-                  popAudio.play();
-                  totalPoints += 1;
-                  return true; // Collision detected
-              }
-          }
+  function shootBall(event) {
+      if (shots > 0) {
+        airAudio.play();
+        var rayDirection = m4.normalize(m4.subtractVectors(target, cameraPosition));
+        
+        ballPosition = cameraPosition.slice();
+        ballVelocity = [rayDirection[0] * 2, rayDirection[1] * 2, rayDirection[2] * 2];
+        shots -= 1;
       }
-      return false; // No collision
   }
+
+  // Function to check if the ball hits an object
+  function checkCollision(position) {
+    for (const cube of cubes) {
+        if (cube.visible) {
+            const distance = m4.distance(position, cube.position);
+            if (distance < 20) { // Collision
+                cube.visible = false;
+                popAudio.play();
+                totalPoints += 1;
+                return true;
+            }
+        }
+      }
+    return false; // No collision
+}
 
   requestAnimationFrame(drawScene);
 
   // Draw the scene.
   function drawScene(time) {
     time *= 0.001;
+
+    const cubeMovement = [
+      [10, -30 * Math.cos(time), 100],
+      [-110, 0, -90 * Math.cos(time)],
+      [-200 * Math.cos(time), 50, -400],
+      [80  * Math.cos(time * 0.5), -70, -600],
+      [200  * Math.cos(time/2 * 0.5) , 50, -140 * Math.cos(time) * Math.cos(time * 0.5)],
+      [-80 * Math.cos(time * 0.5), -50, -500 * Math.sin(time / 2)],
+    ]
+
+    const cubeRotations = [
+      [- time, time],
+      [time, 2 * time],
+      [time, + time],
+      [time, time],
+      [time, - time],
+      [2 * time, time],
+    ]
 
     webglUtils.resizeCanvasToDisplaySize(gl.canvas);
     ballPosition[0] += ballVelocity[0] * 2;
@@ -175,7 +193,6 @@ async function main() {
 
     var invertedCamera = m4.inverse(camera);
 
-
     var viewProjectionMatrix = m4.multiply(
         projectionMatrix,
         invertedCamera
@@ -187,12 +204,12 @@ async function main() {
       ballVelocity = [0, 0, 0];
     }
 
-    var cubeXRotation   = -time;
-    var cubeYRotation   = time;
+    var cubeXRotation   = 0;
+    var cubeYRotation   = 0;
     var cubeScale = [1, 1, 1];
 
     var sphereXRotation   = -time * 20;
-    var sphereYRotation   = time *20;
+    var sphereYRotation   = time * 20;
     var sphereScale = [1, 1, 1];
 
     // ------ Draw the sphere --------
@@ -206,9 +223,6 @@ async function main() {
       u_matrix: m4.identity(),
       u_LightPosition: ballPosition,
     };
-
-    
-    // console.log(ballPosition)
     
     sphereUniforms.u_matrix = computeMatrix(
         viewProjectionMatrix,
@@ -229,9 +243,18 @@ async function main() {
     gl.useProgram(programInfo.program);
 
     webglUtils.setBuffersAndAttributes(gl, programInfo, cubeBufferInfo);
-
+    
+    var i = 0;
     for (const cube of cubes) {
       if (cube.visible) {
+
+          cube.position[0] = +cubeMovement[i][0];
+          cube.position[1] = cubeMovement[i][1];
+          cube.position[2] = +cubeMovement[i][2];
+          cubeXRotation = cubeRotations[i][0];
+          cubeYRotation = cubeRotations[i][1];
+
+          // cube.position[2] += Math.cos(time * 0.5) * 0.1;
           cubeUniforms.u_matrix = computeMatrix(
               viewProjectionMatrix,
               cube.position,
@@ -247,6 +270,7 @@ async function main() {
 
           gl.drawArrays(gl.TRIANGLES, 0, cubeBufferInfo.numElements);
       }
+      i += 1;
   }
     requestAnimationFrame(drawScene);
   }

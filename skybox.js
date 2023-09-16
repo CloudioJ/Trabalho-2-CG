@@ -17,8 +17,6 @@ function main() {
   bgMusic.volume = 0.5;
   bgMusic.loop = true;
   
-
-  // setup GLSL programs and lookup locations
   const envmapProgramInfo = webglUtils.createProgramInfo(
       gl, ["envmap-vertex-shader", "envmap-fragment-shader"]);
   const skyboxProgramInfo = webglUtils.createProgramInfo(
