@@ -36,27 +36,27 @@ function main() {
     const easter = [
       {
         target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
-        url: './assets/Mestre.jpg',
+        url: './assets/Mestre.png',
       },
       {
         target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
-        url: './assets/Mestre.jpg',
+        url: './assets/Mestre.png',
       },
       {
         target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
-        url: './assets/Mestre.jpg',
+        url: './assets/Mestre.png',
       },
       {
         target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
-        url: './assets/Mestre.jpg',
+        url: './assets/Mestre.png',
       },
       {
         target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
-      url: './assets/Mestre.jpg',
+      url: './assets/Mestre.png',
     },
     {
       target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
-      url: './assets/Mestre.jpg',
+      url: './assets/Mestre.png',
     },
   ]
   
@@ -154,6 +154,7 @@ function main() {
   // Get the starting time.
   var then = 0;
   var cubeTexture = texture;
+  var skyTexture = texture;
   
   requestAnimationFrame(drawScene);
   
@@ -200,8 +201,9 @@ function main() {
     var viewDirectionProjectionInverseMatrix =
         m4.inverse(viewDirectionProjectionMatrix);
 
-    if (totalPoints == 5 && time < 5.5) {
+    if (totalPoints == 5 && time < 10) {
       cubeTexture = eggTexture;
+      skyTexture = eggTexture;
     }
 
     // draw the cube
@@ -226,7 +228,7 @@ function main() {
     webglUtils.setBuffersAndAttributes(gl, skyboxProgramInfo, quadBufferInfo);
     webglUtils.setUniforms(skyboxProgramInfo, {
       u_viewDirectionProjectionInverse: viewDirectionProjectionInverseMatrix,
-      u_skybox: texture,
+      u_skybox: skyTexture,
     });
     webglUtils.drawBufferInfo(gl, quadBufferInfo);
 

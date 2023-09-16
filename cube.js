@@ -119,7 +119,6 @@ async function main() {
   const sphereBufferInfo = primitives.createSphereWithVertexColorsBufferInfo(gl, 10,12,6);
 
   
-  var ballPosition = [0, 0, 0];
   var ballVelocity = [0, 0, 0];
   
   

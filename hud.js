@@ -30,7 +30,7 @@ function updateHUD() {
             ctx.drawImage(winImg, 600, 200, 300, 300);
             ctx.fillText("You won!", 650, 500);
         }
-        if(showLoseMessage){
+        if(shots == 0 && showLoseMessage){
             ctx.drawImage(loseImg, 600, 200, 300, 300);
             ctx.fillText("You lost", 660, 500);
         }
@@ -38,7 +38,6 @@ function updateHUD() {
     ctx.fillText(shotsCounter, 1300, 672)
     ctx.fillText(points, 210, 53)
 }
-
 
 function run(time) {
     if (!startTime) {
@@ -58,6 +57,10 @@ function run(time) {
         requestAnimationFrame(run);
     }
 
+    if (shots == 0 && totalPoints <= 3) {
+        showLoseMessage = true;
+    }
+
     if (shots == 0 && totalPoints < 5 && !showLoseMessage) {
         if (loseTimerStart === null) {
             loseTimerStart = time;
@@ -69,5 +72,4 @@ function run(time) {
     }
 }
 
-run(); // Start the animation loop
- 
+run();

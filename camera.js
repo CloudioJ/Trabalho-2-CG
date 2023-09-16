@@ -58,7 +58,7 @@ function MouseRelease(event) {
 }
 
 var fov = degToRad(60);
-var cameraPosition = [-50.37529, 100, 97.62443];
+var cameraPosition = [0, 100, 10];
 var target = [0, 0, 0];
 var up = [0, 1, 0];
 var camera = m4.lookAt(cameraPosition, target, up);

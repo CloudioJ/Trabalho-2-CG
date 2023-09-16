@@ -12,6 +12,7 @@
         <script type="text/javascript">
             var totalPoints = 0;
             var shots = 5;
+            var ballPosition = [0, 0, 0]
         </script>
         <div id="wrapper">
             <canvas class="webgl" id="canvas" width="1420" height="720"></canvas>
@@ -83,7 +84,7 @@
                 float lightFactor = max(dot(v_normal, lightDir), 0.2);
             
                 vec3 cubeColor = textureCube(u_texture, normalize(v_normal)).xyz;
-                vec3 finalColor = cubeColor * lightFactor;
+                vec3 finalColor = cubeColor - lightFactor;
             
                 gl_FragColor = vec4(finalColor, 1.0);
             }

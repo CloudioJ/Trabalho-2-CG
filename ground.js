@@ -98,139 +98,50 @@ function run() {
     uniform mat4 projection;
     uniform mat4 modelView;
     uniform mat4 u_matrix;
-    uniform mat4 u_lightPosition;
 
     varying vec3 v_normal;
     varying vec2 v_texcoord;
-    varying vec4 v_color;
+    varying vec3 v_fragPos; // The fragment's world position
 
     void main() {
       gl_Position = projection * modelView * position;
       v_normal = mat3(modelView) * normal;
       v_texcoord = texcoord;
+
+      // Calculate the world position of the fragment
+      v_fragPos = (modelView * position).xyz;
     }
 `;
 
-  const fs = `
-    precision highp float;
+const fs = `
+precision highp float;
 
-    varying vec3 v_normal;
-    varying vec2 v_texcoord;
+varying vec3 v_normal;
+varying vec2 v_texcoord;
+varying vec3 v_fragPos; // The fragment's world position
 
-    // Add a uniform for the texture sampler
-    uniform sampler2D u_texture;
+// Add a uniform for the texture sampler
+uniform sampler2D u_texture;
+uniform sampler2D u_heightTexture; // Height-based gradient texture
+uniform vec3 u_lightPosition; // World coordinates of the light position
 
-    void main() {
-      vec3 lightDirection = normalize(vec3(2, 2, -4));  // arbitrary light direction
+void main() {
+  vec4 texColor = texture2D(u_texture, v_texcoord);
 
-      // Sample the texture using the v_texcoord coordinates
-      vec4 texColor = texture2D(u_texture, v_texcoord);
+  float groundTexture = texture2D(u_heightTexture, v_texcoord).r;
 
-      vec3 color = vec3(0.1, 0.9, 0.1);
-      float l = dot(lightDirection, normalize(v_normal)) * 0.5 + 0.5;
+  vec3 color = mix(vec3(1.0, 1.0, 1.0), vec3(1.0, 0.9, 1.0), groundTexture);
 
-      // Use the texture color for the fragment color
-      gl_FragColor = vec4(color * l, 1);
-    }
-  `;
+  vec3 lightDirection = normalize(u_lightPosition - v_fragPos);
+  float light = dot(lightDirection, normalize(v_normal)) * 0.5 + 0.5;
 
-//   const fs = `
-//   precision highp float;
+  // Use the modified color for the fragment color
+  gl_FragColor = vec4(color, 1) * texColor;
+  gl_FragColor.rgb -= light * 0.8;
+}
+`;
 
-//   varying vec3 v_normal;
-//   varying vec2 v_texcoord;
 
-//   // Add a uniform for the texture sampler
-//   uniform sampler2D u_texture;
-
-//   void main() {
-//     vec3 lightDirection = normalize(vec3(1, 2, -3));  // arbitrary light direction
-
-//     // Sample the texture using the v_texcoord coordinates
-//     vec4 texColor = texture2D(u_texture, v_texcoord);
-
-//     vec3 color = vec3(0.4, 0.7, 0.9);
-
-//     // Define a threshold value to determine "higher up" normals
-//     float threshold = -3.1; // Adjust this value as needed
-
-//     // Check if the Y component of the normal is above the threshold
-//     if (v_normal.x >= threshold) {
-//       // If it's higher up, change the color
-//       float l = dot(lightDirection, normalize(v_normal)) * 0.5 + 0.5;
-//       gl_FragColor = vec4(vec3(1.0, 1, 1) * l, 1); // Red color for higher up normals
-//     } else {
-//       // If it's not higher up, use the texture color
-//       float l = dot(lightDirection, normalize(v_normal)) * 0.5 + 0.5;
-//       gl_FragColor = vec4(color * l, 1);
-//     }
-//   }
-// `;
-// const fs = `
-//   precision highp float;
-
-//   varying vec3 v_normal;
-//   varying vec2 v_texcoord;
-
-//   // Add a uniform for the texture sampler
-//   uniform sampler2D u_texture;
-
-//   void main() {
-//     vec3 lightDirection = normalize(vec3(1, 2, -3));  // arbitrary light direction
-
-//     // Sample the texture using the v_texcoord coordinates
-//     vec4 texColor = texture2D(u_texture, v_texcoord);
-
-//     // Define colors for higher and lower normals
-//     vec3 higherUpColor = vec3(0.9, 0.9, 0.9);  // Red color for higher normals
-//     vec3 lowerColor = vec3(1, 0.7, 0);     // Blue color for lower normals
-
-//     // Determine the color based on the Y-component of the normals
-//     float l = dot(lightDirection, normalize(v_normal)) * 0.8 + 0.2;
-//     vec3 color = mix(lowerColor, higherUpColor, v_normal.y); // Interpolate between colors
-
-//     // Use the texture color for the fragment color
-//     gl_FragColor = vec4(color * l, 1);
-//   }
-// `;
-
-// const fs = `
-//   precision highp float;
-
-//   varying vec3 v_normal;
-//   varying vec2 v_texcoord;
-
-//   // Add a uniform for the texture sampler
-//   uniform sampler2D u_texture;
-
-//   // Define the fixed light position in world coordinates
-//   uniform vec3 u_lightPosition; // You need to set this in your JavaScript code
-
-//   // Add a uniform for the camera view matrix
-//   uniform mat4 u_viewMatrix; // You need to set this in your JavaScript code
-
-//   void main() {
-//     // Transform the light position into camera space
-//     vec4 lightPositionCameraSpace = u_viewMatrix * vec4(u_lightPosition, 1.0);
-
-//     // Compute the light direction from the transformed light position
-//     vec3 lightDirection = normalize(lightPositionCameraSpace.xyz - gl_FragCoord.xyz);
-
-//     // Sample the texture using the v_texcoord coordinates
-//     vec4 texColor = texture2D(u_texture, v_texcoord);
-
-//     // Define colors for higher and lower normals
-//     vec3 higherUpColor = vec3(0.1, 0.8, 0.1);  // Red color for higher normals
-//     vec3 lowerColor = vec3(0, 1, 0);         // Blue color for lower normals
-
-//     // Determine the color based on the Y-component of the normals
-//     float l = dot(lightDirection, normalize(v_normal)) * 0.2 + 0.3;
-//     vec3 color = mix(lowerColor, higherUpColor, v_normal.y); // Interpolate between colors
-
-//     // Use the texture color for the fragment color
-//     gl_FragColor = vec4(color * l, 1);
-//   }
-// `;
   // compile shader, link, look up locations
   const programInfo = twgl.createProgramInfo(gl, [vs, fs]);
 
@@ -243,7 +154,7 @@ function run() {
   }
 
   const texture = twgl.createTexture(gl, {
-    src: 'green-ground-texture.jpeg',
+    src: './assets/mountain-tex.jpg',
     crossOrigin: '',
   });
 
@@ -269,8 +180,6 @@ function run() {
 
     gl.useProgram(programInfo.program);
 
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
     // gl.uniform1i(programInfo.uniforms.u_texture, 0)
 
     // calls gl.bindBuffer, gl.enableVertexAttribArray, gl.vertexAttribPointer
@@ -280,8 +189,8 @@ function run() {
     twgl.setUniforms(programInfo, {
       projection,
       modelView,
-      u_texture: texture,
-      u_lightPosition: [200, 400, 0],
+      u_heightTexture: texture,
+      u_lightPosition: ballPosition,
       u_viewMatrix: view,
     });  
 
