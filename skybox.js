@@ -18,11 +18,10 @@ function main() {
   bgMusic.loop = true;
   
   const envmapProgramInfo = webglUtils.createProgramInfo(
-      gl, ["envmap-vertex-shader", "envmap-fragment-shader"]);
+      gl, ["fbox_vs", "fbox_fs"]);
   const skyboxProgramInfo = webglUtils.createProgramInfo(
       gl, ["sky_vs", "sky_fs"]);
 
-  // create buffers and fill with vertex data
   const cubeBufferInfo = primitives.createCubeBufferInfo(gl, 1);
   const quadBufferInfo = primitives.createXYQuadBufferInfo(gl);
 
@@ -118,7 +117,6 @@ function main() {
   faceInfos.forEach((faceInfo) => {
     const {target, url} = faceInfo;
 
-    // Upload the canvas to the cubemap face.
     const level = 0;
     const internalFormat = gl.RGBA;
     const width = 512;
@@ -126,14 +124,11 @@ function main() {
     const format = gl.RGBA;
     const type = gl.UNSIGNED_BYTE;
 
-    // setup each face so it's immediately renderable
     gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null);
 
-    // Asynchronously load an image
     const image = new Image();
     image.src = url;
     image.addEventListener('load', function() {
-      // Now that the image has loaded make copy it to the texture.
       gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
       gl.texImage2D(target, level, internalFormat, format, type, image);
       gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
@@ -158,37 +153,28 @@ function main() {
   
   // Draw the scene.
   function drawScene(time) {
-    // convert to seconds
     time *= 0.001;
-    // Subtract the previous time from the current time
-    // Remember the current time for the next frame.
     then = time;
 
     waves.play();
     bgMusic.play();
     webglUtils.resizeCanvasToDisplaySize(gl.canvas);
 
-    // Tell WebGL how to convert from clip space to pixels
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
 
-    // Clear the canvas AND the depth buffer.
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    // Compute the projection matrix
+
     var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     var projectionMatrix =
         m4.perspective(fieldOfViewRadians, aspect, 0.1, 2000);
 
-    // camera going in circle 2 units from origin looking at origin
-
-    // Rotate the cube around the x axis
     var worldMatrix = m4.xRotation(time * 0.11);
     worldMatrix = m4.scale(worldMatrix, 50, 50, 50);
 
-    // We only care about direciton so remove the translation
     var viewDirectionMatrix = m4.copy(view);
     viewDirectionMatrix[12] = 0;
     viewDirectionMatrix[13] = 0;
@@ -199,13 +185,13 @@ function main() {
     var viewDirectionProjectionInverseMatrix =
         m4.inverse(viewDirectionProjectionMatrix);
 
-    if (totalPoints == 5 && time < 10) {
+    if (totalPoints == 5 && time < 60) {
       cubeTexture = eggTexture;
       skyTexture = eggTexture;
     }
 
-    // draw the cube
-    gl.depthFunc(gl.LESS);  // use the default depth test
+    // Draw the cube
+    gl.depthFunc(gl.LESS); 
     gl.useProgram(envmapProgramInfo.program);
     webglUtils.setBuffersAndAttributes(gl, envmapProgramInfo, cubeBufferInfo);
     webglUtils.setUniforms(envmapProgramInfo, {
@@ -217,9 +203,8 @@ function main() {
     });
     webglUtils.drawBufferInfo(gl, cubeBufferInfo);
 
-    // draw the skybox
+    // Draw the skybox
 
-    // let our quad pass the depth test at 1.0
     gl.depthFunc(gl.LEQUAL);
 
     gl.useProgram(skyboxProgramInfo.program);

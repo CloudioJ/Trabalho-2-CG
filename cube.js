@@ -13,12 +13,10 @@ async function main() {
   const airAudio = new Audio('./sounds/mixkit-long-hit-swoosh-1473.wav');
   const popAudio = new Audio('./sounds/pop.mp4');
   airAudio.volume = 0.1;
-  // creates buffers with position, normal, texcoord, and vertex color
-  // data for primitives by calling gl.createBuffer, gl.bindBuffer,
-  // and gl.bufferData
+  
   const cubeBufferInfo = primitives.createCubeWithVertexColorsBufferInfo(gl, 20);
   
-  // setup GLSL program
+
   var programInfo = webglUtils.createProgramInfo(gl, ["cube_vs", "cube_fs"]);
   var sphereProgramInfo = webglUtils.createProgramInfo(gl, ["ball_vs", "ball_fs"]);
 
@@ -58,8 +56,6 @@ async function main() {
 
   faceInfos.forEach((faceInfo) => {
     const {target, url} = faceInfo;
-
-    // Upload the canvas to the cubemap face.
     const level = 0;
     const internalFormat = gl.RGBA;
     const width = 512;
@@ -67,14 +63,11 @@ async function main() {
     const format = gl.RGBA;
     const type = gl.UNSIGNED_BYTE;
 
-    // setup each face so it's immediately renderable
     gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null);
 
-    // Asynchronously load an image
     const image = new Image();
     image.src = url;
     image.addEventListener('load', function() {
-      // Now that the image has loaded make copy it to the texture.
       gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeTex);
       gl.texImage2D(target, level, internalFormat, format, type, image);
       gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
@@ -83,7 +76,6 @@ async function main() {
   
   gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
   gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-  // Uniforms for each object.
 
   var cubePositions = [
     [10, -30, 100],
@@ -199,7 +191,6 @@ async function main() {
     )
 
     if (checkCollision(ballPosition)) {
-      // Ball hit an object, so reset its position and velocity
       ballPosition = [0, 0, 0];
       ballVelocity = [0, 0, 0];
     }
@@ -232,14 +223,12 @@ async function main() {
         sphereScale
     );
 
-    // Set the uniforms we just computed
     webglUtils.setUniforms(sphereProgramInfo, sphereUniforms);
 
     gl.drawArrays(gl.TRIANGLES, 0, sphereBufferInfo.numElements);
 
     // ------ Draw the cube --------
 
-    // Setup all the needed attributes.
     gl.useProgram(programInfo.program);
 
     webglUtils.setBuffersAndAttributes(gl, programInfo, cubeBufferInfo);
@@ -254,7 +243,6 @@ async function main() {
           cubeXRotation = cubeRotations[i][0];
           cubeYRotation = cubeRotations[i][1];
 
-          // cube.position[2] += Math.cos(time * 0.5) * 0.1;
           cubeUniforms.u_matrix = computeMatrix(
               viewProjectionMatrix,
               cube.position,
@@ -265,7 +253,7 @@ async function main() {
 
           cubeUniforms.u_CameraPosition = cameraPosition;
           cubeUniforms.u_LightPosition = ballPosition;
-          // Set the uniforms we just computed
+
           webglUtils.setUniforms(programInfo, cubeUniforms);
 
           gl.drawArrays(gl.TRIANGLES, 0, cubeBufferInfo.numElements);

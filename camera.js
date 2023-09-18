@@ -36,17 +36,12 @@ function MouseMove(event) {
         cameraRotation[0] -= degToRad(deltaY * 0.5); // Pitch
         cameraRotation[1] -= degToRad(deltaX * 0.5); // Yaw
 
-        // Limit pitch to avoid camera flipping
         cameraRotation[0] = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, cameraRotation[0]));
 
-        // Calculate the new target position based on camera rotation
-        // var distance = m4.length(m4.subtractVectors(cameraPosition, target));
         var distance = 100000;
         target[0] = cameraPosition[0] + Math.sin(cameraRotation[1]) * Math.cos(cameraRotation[0]) * distance;
         target[1] = cameraPosition[1] + Math.sin(cameraRotation[0]) * distance;
         target[2] = cameraPosition[2] + Math.cos(cameraRotation[1]) * Math.cos(cameraRotation[0]) * distance;
-
-        // console.log("Mouse movement: deltaX=" + deltaX + ", deltaY=" + deltaY);
     }
 }
 
@@ -78,7 +73,6 @@ function animateCamera() {
     
 
     cameraPosition = calculatePoint(points, t);
-    // target = calculatePoint(points, t + 0.01);
     camera = m4.lookAt(cameraPosition, target, up);
     view = m4.inverse(camera);
     requestAnimationFrame(animateCamera);

@@ -1,7 +1,5 @@
 'use strict';
 
-/* global twgl, m4, requestAnimationFrame, document */
-
 const img = new Image();
 img.onload = run;
 img.crossOrigin = 'anonymous';
@@ -9,7 +7,6 @@ img.src = './assets/Heightmap.png';
 
 
 function run() {
-  // use a canvas 2D to read the image
   const ctx = document.createElement('canvas').getContext('2d');
 
   ctx.canvas.width = img.width;
@@ -18,8 +15,8 @@ function run() {
   const imgData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
 
   function getHeight(offset) {
-    const v =  imgData.data[offset * 4]; // x4 because RGBA
-    return v * 10 / 255; // 0 to 10
+    const v =  imgData.data[offset * 4];
+    return v * 10 / 255;
   }
 
   const positions = [];
@@ -63,14 +60,6 @@ function run() {
         (u0 + u1) / 2, (v0 + v1) / 2,
       );
 
-  //         
-  //      0----1 
-  //      |\  /|
-  //      | \/4|
-  //      | /\ |
-  //      |/  \|
-  //      2----3 
-
       indices.push(
         ndx, ndx + 4, ndx + 1,
         ndx, ndx + 2, ndx + 4,
@@ -80,68 +69,16 @@ function run() {
     }
   }
 
-  const maxAngle = 2 * Math.PI / 180;  // make them facetted
+  const maxAngle = 2 * Math.PI / 180; 
   const arrays = generateNormals({
     position: positions,
     texcoord: texcoords,
     indices,
   }, maxAngle);
 
-
   const gl = document.querySelector('canvas').getContext('webgl');
 
-  const vs = `
-    attribute vec4 position;
-    attribute vec3 normal;
-    attribute vec2 texcoord;
-
-    uniform mat4 projection;
-    uniform mat4 modelView;
-    uniform mat4 u_matrix;
-
-    varying vec3 v_normal;
-    varying vec2 v_texcoord;
-    varying vec3 v_fragPos; // The fragment's world position
-
-    void main() {
-      gl_Position = projection * modelView * position;
-      v_normal = mat3(modelView) * normal;
-      v_texcoord = texcoord;
-
-      // Calculate the world position of the fragment
-      v_fragPos = (modelView * position).xyz;
-    }
-`;
-
-const fs = `
-precision highp float;
-
-varying vec3 v_normal;
-varying vec2 v_texcoord;
-varying vec3 v_fragPos; // The fragment's world position
-
-// Add a uniform for the texture sampler
-uniform sampler2D u_texture;
-uniform sampler2D u_heightTexture; // Height-based gradient texture
-uniform vec3 u_lightPosition; // World coordinates of the light position
-
-void main() {
-  vec4 texColor = texture2D(u_texture, v_texcoord);
-
-  float groundTexture = texture2D(u_heightTexture, v_texcoord).r;
-
-  vec3 color = mix(vec3(0.0, 0.0, 1.0), vec3(1.0, 0.9, 1.0), groundTexture);
-
-  vec3 lightDirection = normalize(u_lightPosition - v_fragPos);
-  float light = dot(lightDirection, normalize(v_normal)) * 0.5 + 0.5;
-
-  // Use the modified color for the fragment color
-  gl_FragColor = vec4(color, 1) * texColor;
-  gl_FragColor.rgb -= light * 0.8;
-}
-`;
-
-  const programInfo = twgl.createProgramInfo(gl, [vs, fs]);
+  const programInfo = twgl.createProgramInfo(gl, ["ground_vs", "ground_fs"]);
 
   const bufferInfo = twgl.createBufferInfoFromArrays(gl, arrays);
 
@@ -150,7 +87,7 @@ void main() {
   }
 
   const texture = twgl.createTexture(gl, {
-    src: './assets/Heightmap.png',
+    src: './assets/aerial_rocks.jpg',
     crossOrigin: '',
   });
 
@@ -176,12 +113,8 @@ void main() {
 
     gl.useProgram(programInfo.program);
 
-    // gl.uniform1i(programInfo.uniforms.u_texture, 0)
-
-    // calls gl.bindBuffer, gl.enableVertexAttribArray, gl.vertexAttribPointer
     twgl.setBuffersAndAttributes(gl, programInfo, bufferInfo);
 
-    // calls gl.activeTexture, gl.bindTexture, gl.uniformXXX
     twgl.setUniforms(programInfo, {
       projection,
       modelView,
@@ -190,7 +123,6 @@ void main() {
       u_viewMatrix: view,
     });  
 
-    // calls gl.drawArrays or gl.drawElements
     twgl.drawBufferInfo(gl, bufferInfo);
 
     requestAnimationFrame(render);
@@ -202,15 +134,12 @@ void main() {
     const positions = arrays.position;
     const texcoords = arrays.texcoord;
 
-    // first compute the normal of each face
     let getNextIndex = makeIndiceIterator(arrays);
     const numFaceVerts = getNextIndex.numElements;
     const numVerts = arrays.position.length;
     const numFaces = numFaceVerts / 3;
     const faceNormals = [];
 
-    // Compute the normal for every face.
-    // While doing that, create a new vertex for every face vertex
     for (let i = 0; i < numFaces; ++i) {
       const n1 = getNextIndex() * 3;
       const n2 = getNextIndex() * 3;
@@ -225,8 +154,6 @@ void main() {
 
     let tempVerts = {};
     let tempVertNdx = 0;
-
-    // this assumes vertex positions are an exact match
 
     function getVertIndex(x, y, z) {
 
@@ -247,7 +174,6 @@ void main() {
       vertIndices.push(getVertIndex(vert));
     }
 
-    // go through every vertex and record which faces it's on
     const vertFaces = [];
     getNextIndex.reset();
     for (let i = 0; i < numFaces; ++i) {
@@ -263,11 +189,6 @@ void main() {
       }
     }
 
-    // now go through every face and compute the normals for each
-    // vertex of the face. Only include faces that aren't more than
-    // maxAngle different. Add the result to arrays of newPositions,
-    // newTexcoords and newNormals, discarding any vertices that
-    // are the same.
     tempVerts = {};
     tempVertNdx = 0;
     const newPositions = [];
