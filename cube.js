@@ -15,14 +15,10 @@ async function main() {
   airAudio.volume = 0.1;
   
   const cubeBufferInfo = primitives.createCubeWithVertexColorsBufferInfo(gl, 20);
-  
 
   var programInfo = webglUtils.createProgramInfo(gl, ["cube_vs", "cube_fs"]);
   var sphereProgramInfo = webglUtils.createProgramInfo(gl, ["ball_vs", "ball_fs"]);
 
-  function degToRad(d) {
-    return d * Math.PI / 180;
-  }
 
   const cubeTex = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeTex);
@@ -77,15 +73,6 @@ async function main() {
   gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
   gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
 
-  var cubePositions = [
-    [10, -30, 100],
-    [-110, 0, -90],
-    [160, 50, -400],
-    [80, -70, -600],
-    [200, -20, -140],
-    [-80, -50, -400],
-  ]
-
   var cubes = cubePositions.map((position) => ({
     position,
     visible: true,
@@ -130,20 +117,27 @@ async function main() {
   }
 
   // Function to check if the ball hits an object
-  function checkCollision(position) {
+  function checkCollision(position, time) {
+    var startTime = time
+    var elapsedTime = time - startTime;
+
+    var i = 0;
     for (const cube of cubes) {
-        if (cube.visible) {
-            const distance = m4.distance(position, cube.position);
-            if (distance < 20) { // Collision
-                cube.visible = false;
-                popAudio.play();
-                totalPoints += 1;
-                return true;
-            }
+      if (cube.visible) {
+        const distance = m4.distance(position, cube.position);
+        if (distance < 60) { // Collision
+          cube.visible = false;
+          balloons[i].visible = false;
+          balloons[i].position[1] = -100;
+          popAudio.play();
+          totalPoints += 1;
+          return true;
         }
       }
+      i++
+    }
     return false; // No collision
-}
+  }
 
   requestAnimationFrame(drawScene);
 
@@ -170,6 +164,7 @@ async function main() {
     ]
 
     webglUtils.resizeCanvasToDisplaySize(gl.canvas);
+
     ballPosition[0] += ballVelocity[0] * 2;
     ballPosition[1] += ballVelocity[1] * 2;
     ballPosition[2] += ballVelocity[2] * 2;
@@ -190,7 +185,9 @@ async function main() {
         invertedCamera
     )
 
-    if (checkCollision(ballPosition)) {
+    var balloonCenter = [ballPosition[0], ballPosition[1] - 50, ballPosition[2]];
+
+    if (checkCollision(balloonCenter)) {
       ballPosition = [0, 0, 0];
       ballVelocity = [0, 0, 0];
     }
