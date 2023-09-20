@@ -385,8 +385,8 @@ async function main() {
     vec3 surfaceToViewDirection = normalize(v_surfaceToView);
     vec3 halfVector = normalize(u_lightDirection + surfaceToViewDirection);
 
-    float fakeLight = dot(u_lightDirection, normal) * .5 + .5;
-    float specularLight = clamp(dot(normal, halfVector), 0.5, 1.0);
+    float fakeLight = dot(u_lightDirection, normal) * 0.2 + 0.9;
+    float specularLight = clamp(dot(normal, halfVector) * 0.5 + 0.47, 0.1, 1.0);
     vec4 specularMapColor = texture2D(specularMap, v_texcoord);
     vec3 effectiveSpecular = specular * specularMapColor.rgb;
 
@@ -403,7 +403,6 @@ async function main() {
   }
   `;
 
-  // compiles and links the shaders, looks up attribute and uniform locations
   const meshProgramInfo = webglUtils.createProgramInfo(gl, [vs, fs]);
 
   const objHref = './object/Air_Balloon.obj';

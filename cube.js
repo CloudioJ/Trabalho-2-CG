@@ -240,6 +240,7 @@ async function main() {
           cubeXRotation = cubeRotations[i][0];
           cubeYRotation = cubeRotations[i][1];
 
+          cube
           cubeUniforms.u_matrix = computeMatrix(
               viewProjectionMatrix,
               cube.position,
