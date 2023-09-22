@@ -98,21 +98,21 @@ async function main() {
  // ------------------ MAKE THE BALL
 
   const sphereBufferInfo = primitives.createSphereWithVertexColorsBufferInfo(gl, 10,12,6);
-
-  
-  var ballVelocity = [0, 0, 0];
-  
   
   canvas.addEventListener("click", shootBall);
+
+  var ballIndex = 0;
 
   function shootBall(event) {
       if (shots > 0) {
         airAudio.play();
         var rayDirection = m4.normalize(m4.subtractVectors(target, cameraPosition));
         
-        ballPosition = cameraPosition.slice();
-        ballVelocity = [rayDirection[0] * 2, rayDirection[1] * 2, rayDirection[2] * 2];
+        ballPositions[ballIndex] = cameraPosition.slice();
+        ballVelocities[ballIndex] = [rayDirection[0] * 2, rayDirection[1] * 2, rayDirection[2] * 2];
         shots -= 1;
+        activeBall = ballIndex;
+        ballIndex++;
       }
   }
 
@@ -141,6 +141,7 @@ async function main() {
 
   requestAnimationFrame(drawScene);
 
+  
   // Draw the scene.
   function drawScene(time) {
     time *= 0.001;
@@ -165,10 +166,6 @@ async function main() {
 
     webglUtils.resizeCanvasToDisplaySize(gl.canvas);
 
-    ballPosition[0] += ballVelocity[0] * 2;
-    ballPosition[1] += ballVelocity[1] * 2;
-    ballPosition[2] += ballVelocity[2] * 2;
-
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     gl.enable(gl.CULL_FACE);
@@ -185,11 +182,14 @@ async function main() {
         invertedCamera
     )
 
-    var balloonCenter = [ballPosition[0], ballPosition[1] - 50, ballPosition[2]];
+    for(var i = 0; i < ballPositions.length; i++) {
+      var balloonCenter = [ballPositions[i][0], ballPositions[i][1] - 50, ballPositions[i][2]];
 
-    if (checkCollision(balloonCenter)) {
-      ballPosition = [0, 0, 0];
-      ballVelocity = [0, 0, 0];
+      
+      if (checkCollision(balloonCenter)) {
+        ballPositions[i] = [1, 1, 1];
+        ballVelocities[i] = [0, 0, 0];
+      }
     }
 
     var cubeXRotation   = 0;
@@ -206,23 +206,30 @@ async function main() {
 
     webglUtils.setBuffersAndAttributes(gl, sphereProgramInfo, sphereBufferInfo);
         
-    var sphereUniforms = {
-      u_colorMult: [0.5, 1, 0.5, 1],
-      u_matrix: m4.identity(),
-      u_LightPosition: ballPosition,
-    };
-    
-    sphereUniforms.u_matrix = computeMatrix(
-        viewProjectionMatrix,
-        ballPosition,
-        sphereXRotation,
-        sphereYRotation,
-        sphereScale
-    );
+    for(var i = 0; i < ballPositions.length; i++) {
 
-    webglUtils.setUniforms(sphereProgramInfo, sphereUniforms);
+      ballPositions[i][0] += ballVelocities[i][0] * 2;
+      ballPositions[i][1] += ballVelocities[i][1] * 2;
+      ballPositions[i][2] += ballVelocities[i][2] * 2;
 
-    gl.drawArrays(gl.TRIANGLES, 0, sphereBufferInfo.numElements);
+      var sphereUniforms = {
+        u_colorMult: [0.5, 1, 0.5, 1],
+        u_matrix: m4.identity(),
+        u_LightPosition: ballPositions[ballIndex],
+      };
+      
+      sphereUniforms.u_matrix = computeMatrix(
+          viewProjectionMatrix,
+          ballPositions[i],
+          sphereXRotation,
+          sphereYRotation,
+          sphereScale
+      );
+
+      webglUtils.setUniforms(sphereProgramInfo, sphereUniforms);
+
+      gl.drawArrays(gl.TRIANGLES, 0, sphereBufferInfo.numElements);
+    }
 
     // ------ Draw the cube --------
 
@@ -250,7 +257,7 @@ async function main() {
           );
 
           cubeUniforms.u_CameraPosition = cameraPosition;
-          cubeUniforms.u_LightPosition = ballPosition;
+          cubeUniforms.u_LightPosition = ballPositions;
 
           webglUtils.setUniforms(programInfo, cubeUniforms);
 

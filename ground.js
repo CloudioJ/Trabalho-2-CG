@@ -126,7 +126,7 @@ function run() {
             projection,
             modelView,
             texture: texture,
-            u_lightPosition: ballPosition,
+            u_lightPosition: ballPositions[activeBall],
         });
 
         // calls gl.drawArrays or gl.drawElements

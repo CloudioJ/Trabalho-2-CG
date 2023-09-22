@@ -383,25 +383,35 @@ async function main() {
     normal = normalize(tbn * normal);
 
     vec3 surfaceToViewDirection = normalize(v_surfaceToView);
+    
     vec3 halfVector = normalize(u_lightDirection + surfaceToViewDirection);
 
-    float fakeLight = dot(u_lightDirection, normal) * 0.2 + 0.9;
+    float distanceToLight = length(u_lightDirection); // Calculate the distance to the light source
+    float attenuation = 1.0 / (distanceToLight * distanceToLight); // Inverse square law for attenuation
+
+    float fakeLight = dot(u_lightDirection, normal) * attenuation * 0.1 + 0.7; // Apply attenuation here
     float specularLight = clamp(dot(normal, halfVector) * 0.5 + 0.47, 0.1, 1.0);
     vec4 specularMapColor = texture2D(specularMap, v_texcoord);
     vec3 effectiveSpecular = specular * specularMapColor.rgb;
+
+    // Define the constant light at position (1, 1, 1)
+    vec3 constantLightPosition = vec3(1.0, 1.0, 1.0);
+    vec3 constantLightDirection = normalize(constantLightPosition - gl_FragCoord.xyz);
+    float constantLight = dot(vec3(0.1, 0.1, 0.1), normal) * dot(constantLightDirection, normal);
 
     vec4 diffuseMapColor = texture2D(diffuseMap, v_texcoord);
     vec3 effectiveDiffuse = diffuse * diffuseMapColor.rgb * v_color.rgb;
     float effectiveOpacity = opacity * diffuseMapColor.a * v_color.a;
 
+    // Combine the contributions from all light sources
     gl_FragColor = vec4(
         emissive / 2.0 +
         ambient * u_ambientLight +
-        effectiveDiffuse * fakeLight +
+        effectiveDiffuse * (fakeLight + constantLight) +
         effectiveSpecular * pow(specularLight, shininess / 1.0),
         effectiveOpacity);
   }
-  `;
+`;
 
   const meshProgramInfo = webglUtils.createProgramInfo(gl, [vs, fs]);
 
@@ -554,7 +564,7 @@ async function main() {
     const projection = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
 
     const sharedUniforms = {
-      u_lightDirection: ballPosition,
+      u_lightDirection: ballPositions[activeBall],
       u_projection: projection,
     };
 
