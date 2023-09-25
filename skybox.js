@@ -191,17 +191,17 @@ function main() {
     }
 
     // Draw the cube
-    // gl.depthFunc(gl.LESS); 
-    // gl.useProgram(envmapProgramInfo.program);
-    // webglUtils.setBuffersAndAttributes(gl, envmapProgramInfo, cubeBufferInfo);
-    // webglUtils.setUniforms(envmapProgramInfo, {
-    //   u_world: worldMatrix,
-    //   u_view: view,
-    //   u_projection: projectionMatrix,
-    //   u_texture: cubeTexture,
-    //   u_worldCameraPosition: cameraPosition,
-    // });
-    // webglUtils.drawBufferInfo(gl, cubeBufferInfo);
+    gl.depthFunc(gl.LESS); 
+    gl.useProgram(envmapProgramInfo.program);
+    webglUtils.setBuffersAndAttributes(gl, envmapProgramInfo, cubeBufferInfo);
+    webglUtils.setUniforms(envmapProgramInfo, {
+      u_world: worldMatrix,
+      u_view: view,
+      u_projection: projectionMatrix,
+      u_texture: cubeTexture,
+      u_worldCameraPosition: cameraPosition,
+    });
+    webglUtils.drawBufferInfo(gl, cubeBufferInfo);
 
     // Draw the skybox
 

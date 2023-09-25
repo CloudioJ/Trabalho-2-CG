@@ -563,35 +563,40 @@ async function main() {
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     const projection = m4.perspective(fieldOfViewRadians, aspect, zNear, zFar);
 
-    const sharedUniforms = {
-      u_lightDirection: ballPositions[activeBall],
-      u_projection: projection,
-    };
-
+    
     var i = 0
     for (const balloon of balloons) {
       if (balloon.visible) {
-
+        
         const position = cubePositions[i];
         const world = m4.identity();
         world[12] = position[0];
         world[13] = position[1];
         world[14] = position[2];
-
+        
         const u_world = m4.scale(world, 2, 2, 2)
         // Render each instance
         gl.useProgram(meshProgramInfo.program);
-        webglUtils.setUniforms(meshProgramInfo, {
-          u_world: u_world,   // A matriz de mundo permanece inalterada
-          u_view: view,     // Aplicamos a transformação da câmera aqui
-          u_viewWorldPosition: cameraPosition,
-        });
+        
+          const sharedUniforms = {
+            u_lightDirection: ballPositions[activeBall],
+            u_projection: projection,
+          };
 
-        for (const { bufferInfo, material } of parts) {
-          webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo);
-          webglUtils.setUniforms(meshProgramInfo, sharedUniforms, material);
-          webglUtils.drawBufferInfo(gl, bufferInfo);
-        }
+          webglUtils.setUniforms(meshProgramInfo, {
+            u_world: u_world,   // A matriz de mundo permanece inalterada
+            u_view: view,     // Aplicamos a transformação da câmera aqui
+            u_viewWorldPosition: cameraPosition,
+          });
+          
+
+          for (const { bufferInfo, material } of parts) {
+            webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo);
+            webglUtils.setUniforms(meshProgramInfo, sharedUniforms, material);
+            webglUtils.drawBufferInfo(gl, bufferInfo);
+          }
+        
+
       }
       i++;
     }

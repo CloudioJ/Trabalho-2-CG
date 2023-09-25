@@ -117,9 +117,7 @@ async function main() {
   }
 
   // Function to check if the ball hits an object
-  function checkCollision(position, time) {
-    var startTime = time
-    var elapsedTime = time - startTime;
+  function checkCollision(position) {
 
     var i = 0;
     for (const cube of cubes) {
